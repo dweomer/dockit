@@ -1,2 +1,2 @@
-# sweomer - automating docker swarm init/join with consul
-
+# sweomer - Docker Swarm, with Consul
+---
