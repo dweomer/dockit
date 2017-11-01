@@ -16,61 +16,51 @@ var (
 		Name:   "consul-cacert",
 		Usage:  "the Consul CA certificate file",
 		EnvVar: consul.HTTPCAFile,
-		Hidden: true,
 	}
 	fConsulCAPath = cli.StringFlag{
 		Name:   "consul-capath",
 		Usage:  "the Consul CA certificate path",
 		EnvVar: consul.HTTPCAPath,
-		Hidden: true,
 	}
 	fConsulClientCert = cli.StringFlag{
 		Name:   "consul-client-cert",
 		Usage:  "the Consul client certificate",
 		EnvVar: consul.HTTPClientCert,
-		Hidden: true,
 	}
 	fConsulClientKey = cli.StringFlag{
 		Name:   "consul-client-key",
 		Usage:  "the Consul client key",
 		EnvVar: consul.HTTPClientKey,
-		Hidden: true,
 	}
 	fConsulHTTPAddr = cli.StringFlag{
 		Name:   "consul-http-addr",
 		Usage:  "the Consul HTTP address",
 		EnvVar: consul.HTTPAddrEnvName,
-		Hidden: true,
 	}
 	fConsulHTTPAuth = cli.StringFlag{
 		Name:   "consul-http-auth",
 		Usage:  "the Consul HTTP authentication header",
 		EnvVar: consul.HTTPAuthEnvName,
-		Hidden: true,
 	}
 	fConsulHTTPToken = cli.StringFlag{
 		Name:   "consul-http-token",
 		Usage:  "the Consul HTTP token",
 		EnvVar: consul.HTTPTokenEnvName,
-		Hidden: true,
 	}
 	fConsulHTTPSSL = cli.StringFlag{
 		Name:   "consul-http-ssl",
 		Usage:  "enable Consul over HTTPS?",
 		EnvVar: consul.HTTPSSLEnvName,
-		Hidden: true,
 	}
 	fConsulHTTPSSLVerify = cli.StringFlag{
 		Name:   "consul-http-ssl-verify",
 		Usage:  "enable Consul certificate verification?",
 		EnvVar: consul.HTTPSSLVerifyEnvName,
-		Hidden: true,
 	}
 	fConsulTLSServerName = cli.StringFlag{
 		Name:   "consul-tls-server-name",
 		Usage:  "the Consul TLS/SNI server name",
 		EnvVar: consul.HTTPTLSServerName,
-		Hidden: true,
 	}
 	fConsulRaftRetryMax = cli.IntFlag{
 		Name:  "consul-raft-retry-max",

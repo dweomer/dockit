@@ -9,6 +9,11 @@ import (
 	"github.com/urfave/cli"
 )
 
+const (
+	// Version is the urfave/cli App.Version
+	Version = "unknown"
+)
+
 func init() {
 	cli.VersionPrinter = func(c *cli.Context) {
 		fmt.Fprintf(c.App.Writer, "%v version %v (docker-api=%v, consul-api=%v)\n", c.App.HelpName, c.App.Version, docker.DefaultVersion, consul.Version)

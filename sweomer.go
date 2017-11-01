@@ -8,16 +8,7 @@ import (
 	"strings"
 	"time"
 
-	consul "github.com/hashicorp/consul/api"
 	"github.com/urfave/cli"
-)
-
-const (
-	// the urfave/cli App.usage
-	usage = "Docker Swarm, with Consul"
-
-	// the urfave/cli App.version
-	version = "unknown"
 )
 
 var (
@@ -26,8 +17,8 @@ var (
 
 func init() {
 	app.Name = strings.Title(app.Name)
-	app.Usage = usage
-	app.Version = version
+	app.Usage = "Docker Swarm, with Consul"
+	app.Version = Version
 	app.EnableBashCompletion = true
 
 	app.Flags = []cli.Flag{
@@ -53,7 +44,7 @@ func main() {
 		Name:     "worker",
 		Usage:    "Swarm worker join, leveraging Consul",
 		Category: "Docker Swarm",
-		Action:   doCluster,
+		Action:   doSwarm,
 		Flags: []cli.Flag{
 			fConsulRaftRetryInterval,
 			fConsulRaftRetryMax,
@@ -70,7 +61,7 @@ func main() {
 		Name:     "manager",
 		Usage:    "Swarm manager init/join, leveraging Consul",
 		Category: "Docker Swarm",
-		Action:   doCluster,
+		Action:   doSwarm,
 		Flags: []cli.Flag{
 			fConsulRaftRetryInterval,
 			fConsulRaftRetryMax,
@@ -97,18 +88,18 @@ func main() {
 	app.RunAndExitOnError()
 }
 
-func doCluster(c *cli.Context) error {
-	ccl, err := consul.NewClient(consul.DefaultConfig())
+func doSwarm(c *cli.Context) error {
+	consul, err := newConsulClient(c)
 	if err != nil {
 		return err
 	}
 
-	// make sure that consul cluster has bootstrapped
-	raft, err := ccl.Operator().RaftGetConfiguration(nil)
+	// make sure that consul cluster has boot-strapped
+	raft, err := consul.Operator().RaftGetConfiguration(nil)
 	if err != nil || (raft != nil && len(raft.Servers) == 0) {
 		for i := 0; i < c.Int(fConsulRaftRetryMax.Name); i++ {
 			time.Sleep(c.Duration(fConsulRaftRetryInterval.Name))
-			raft, err = ccl.Operator().RaftGetConfiguration(nil)
+			raft, err = consul.Operator().RaftGetConfiguration(nil)
 			if err == nil && raft != nil && len(raft.Servers) > 0 {
 				break
 			}
@@ -120,29 +111,28 @@ func doCluster(c *cli.Context) error {
 		return errors.New("unable to read Consul Raft status")
 	}
 
-	dcl, err := newDockerClient(c)
+	docker, err := newDockerClient(c)
 	if err != nil {
 		return err
 	}
 
-	dinfo, err := dcl.Info(context.Background())
+	engine, err := docker.Info(context.Background())
 	if err != nil {
 		return err
 	}
-
-	if dinfo.Swarm.NodeID != "" {
-		if dnode, _, e := dcl.NodeInspectWithRaw(context.Background(), dinfo.Swarm.NodeID); e == nil {
-			fmt.Fprintf(c.App.Writer, "%s\n", dnode.ID)
+	if engine.Swarm.NodeID != "" {
+		if node, _, e := docker.NodeInspectWithRaw(context.Background(), engine.Swarm.NodeID); e == nil {
+			fmt.Fprintf(c.App.Writer, "%s\n", node.ID)
 			return nil
 		}
 	}
 
 	if c.Command.Name == "worker" {
-		if e := swarmJoin(dcl, ccl, c); e != nil {
+		if e := swarmJoin(docker, consul, c); e != nil {
 			return e
 		}
 	} else if c.Command.Name == "manager" {
-		lk, le := ccl.LockKey("docker/swarm/leader/.lock")
+		lk, le := consul.LockKey("docker/swarm/leader/.lock")
 		if le != nil {
 			return le
 		}
@@ -159,27 +149,26 @@ func doCluster(c *cli.Context) error {
 		}
 
 		lkey := "docker/swarm/leader"
-		lkvp, _, lkerr := ccl.KV().Get(lkey, nil)
+		lkvp, _, lkerr := consul.KV().Get(lkey, nil)
 		if lkerr != nil {
 			return lkerr
 		}
 
 		if ll != nil && (lkvp == nil || len(lkvp.Value) == 0) {
-			err = swarmInit(dcl, ccl, c)
+			err = swarmInit(docker, consul, c)
 		} else {
-			err = swarmJoin(dcl, ccl, c)
+			err = swarmJoin(docker, consul, c)
 		}
 		if err != nil {
 			return err
 		}
 	}
 
-	dinfo, err = dcl.Info(context.Background())
+	engine, err = docker.Info(context.Background())
 	if err != nil {
 		return err
 	}
-
-	fmt.Fprintf(c.App.Writer, "%s\n", dinfo.Swarm.NodeID)
+	fmt.Fprintf(c.App.Writer, "%s\n", engine.Swarm.NodeID)
 
 	return nil
 }
