@@ -6,10 +6,13 @@ COPY . /go/src/github.com/dweomer/sweomer
 
 WORKDIR /go/src/github.com/dweomer/sweomer
 
+ARG VERSION
 ENV CGO_ENABLED=0
 
 RUN dep ensure -v
-RUN go install -v ./...
+RUN export VERSION=${VERSION:-$(git describe --tags --always --dirty | sed -e 's/^v//g' -e "s/dirty/dev-$(git rev-parse --short HEAD)/g")} \
+ && go install -v -ldflags="-X main.Version=${VERSION}" ./...
+RUN /go/bin/sweomer --version
 
 FROM scratch
 

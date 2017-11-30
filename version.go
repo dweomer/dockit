@@ -9,7 +9,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-const (
+var (
 	// Version is the urfave/cli App.Version
 	Version = "unknown"
 )
